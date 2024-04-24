@@ -71,7 +71,7 @@ interface Employee {
 }
 
 export function getEmployee(id: number): Employee | null {
-  const result = employees.filter((employee) => employee.id === id);
+  const result = employees.filter((employee) => employee.id == id);
   return result.length !== 0 ? structuredClone(result[0]) : null;
 }
 
@@ -95,9 +95,9 @@ export function createEmployee(employee: {
   return newId;
 }
 
-export function deleteEmployee(id: number) {
-  const elementToDelete = employees.find((employee) => employee.id == id);
-  const affectedId = elementToDelete ? elementToDelete.id : null;
-  employees = employees.filter((x) => x.id !== id);
+export function deleteEmployeeById(id: number) {
+  const indexToDelete = employees.findIndex((employee) => employee.id == id);
+  if (indexToDelete === -1) return null;
+  employees.splice(indexToDelete, 1);
   return id;
 }
