@@ -6,6 +6,7 @@ import {
 } from "fastify";
 
 import * as employeesModel from "../models/employees-model";
+import { EMPLOYEES_REPORT_CACHE_KEY } from "../services/report-service";
 
 import {
   postEmployeeBodySchema,
@@ -20,8 +21,9 @@ export default function postEmployees(fastify: FastifyInstance): RouteOptions {
       body: postEmployeeBodySchema,
     },
     handler: async function (request: FastifyRequest, reply: FastifyReply) {
-      const employeeBody = request.body as postEmployeeBodyType;
-      const id = employeesModel.createEmployee(employeeBody);
+      const employee = request.body as postEmployeeBodyType;
+      const id = await employeesModel.createEmployee(fastify, employee);
+      fastify.drawer.del(EMPLOYEES_REPORT_CACHE_KEY);
       reply.code(201).send({ id });
     },
   };

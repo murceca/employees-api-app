@@ -1,11 +1,6 @@
-import {
-  FastifyInstance,
-  FastifyReply,
-  FastifyRequest,
-  RouteOptions,
-} from "fastify";
+import { FastifyInstance, RouteOptions } from "fastify";
 import * as employeesModel from "../models/employees-model";
-import { postByIdType } from "../schemas/employee-schema";
+import { paramsIdTypeSchema, paramsIdType } from "../schemas/employee-schema";
 
 export default function getEmployeeById(
   fastify: FastifyInstance
@@ -13,13 +8,16 @@ export default function getEmployeeById(
   return {
     method: "GET",
     url: "/api/employees/:id",
-    handler: async function (request: FastifyRequest, reply: FastifyReply) {
-      const { id } = request.params as postByIdType;
-      const employee = employeesModel.getEmployee(id);
-      if (employee) {
-        reply.send(employee);
+    schema: {
+      params: paramsIdTypeSchema,
+    },
+    handler: async function (request, reply) {
+      const params = request.params as paramsIdType;
+      const employee = await employeesModel.getEmployee(fastify, params.id);
+      if (!employee || employee.length === 0) {
+        reply.code(404).send({ message: "No employee found with this id" });
       } else {
-        reply.code(404);
+        reply.send(employee);
       }
     },
   };

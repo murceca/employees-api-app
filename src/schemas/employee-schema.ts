@@ -3,16 +3,19 @@ import { Static, Type } from "@sinclair/typebox";
 export const postEmployeeBodySchema = Type.Object({
   name: Type.String(),
   title: Type.String(),
-  tribe: Type.Object({
-    id: Type.Number(),
-    name: Type.String(),
-    department: Type.String(),
-  }),
+  tribe_id: Type.Integer(),
+});
+
+export const searchQuerySchema = Type.Object({
+  name: Type.Optional(Type.String()),
+  title: Type.Optional(Type.String()),
+  tribe: Type.Optional(Type.String()),
 });
 
 export type postEmployeeBodyType = Static<typeof postEmployeeBodySchema>;
 
-export const postByIdSchema = Type.Object({
-  id: Type.Number({ minimum: 0 }),
+export const paramsIdTypeSchema = Type.Object({
+  id: Type.Integer(),
 });
-export type postByIdType = Static<typeof postByIdSchema>;
+export type paramsIdType = Static<typeof paramsIdTypeSchema>;
+export type searchQueryType = Static<typeof searchQuerySchema>;

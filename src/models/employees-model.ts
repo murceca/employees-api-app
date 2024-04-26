@@ -1,103 +1,57 @@
-import { v4 as uuidv4 } from "uuid";
+import {
+  postEmployeeBodyType,
+  searchQueryType,
+} from "../schemas/employee-schema";
+import { FastifyInstance } from "fastify";
 
-let employees: Employee[] = [
-  {
-    id: 0,
-    name: "John Doe",
-    title: "Chief Happinnes Officer",
-    tribe: {
-      id: 1,
-      name: "Interstellar",
-      department: "Other Engineering",
-    },
-  },
-  {
-    id: 1,
-    name: "Edward Lewis",
-    title: "Software Engineer",
-    tribe: {
-      id: 2,
-      name: "Data Engineering",
-      department: "Data",
-    },
-  },
-  {
-    id: 2,
-    name: "Eliana Heilig",
-    title: "Analyst",
-    tribe: {
-      id: 3,
-      name: "Callendar",
-      department: "Engineering Sales CRM",
-    },
-  },
-  {
-    id: 3,
-    name: "Mariam de Haan",
-    title: "Principal Engineer",
-    tribe: {
-      id: 4,
-      name: "Focus",
-      department: "Engineering Sales CRM",
-    },
-  },
-  {
-    id: 4,
-    name: "Octavia Paul",
-    title: "Intern",
-    tribe: {
-      id: 5,
-      name: "Engineering Business Solutions",
-      department: "Spark",
-    },
-  },
-  {
-    id: 5,
-    name: "Phillip Quan",
-    title: "Product Manager",
-    tribe: {
-      id: 6,
-      name: "Data Platform",
-      department: "Data",
-    },
-  },
-];
+const TABLE_NAME = "employees";
 
-interface Employee {
+export interface Employee {
   id: number;
   name: string;
   title: string;
-  tribe: object;
+  tribe_id: number;
 }
 
-export function getEmployee(id: number): Employee | null {
-  const result = employees.filter((employee) => employee.id == id);
-  return result.length !== 0 ? structuredClone(result[0]) : null;
+export async function getEmployees(
+  fastify: FastifyInstance,
+  searchQuery: searchQueryType
+): Promise<Employee[]> {
+  const employeesQuery = fastify.db
+    .from(TABLE_NAME)
+    .innerJoin("tribes", "tribes.id", "employees.tribe_id")
+    .select(
+      "employees.id as id",
+      "employees.name as name",
+      "employees.title as title",
+      "tribes.id as tribe_id"
+    );
+
+  if (searchQuery.name)
+    employeesQuery.whereLike("employees.name", `%${searchQuery.name}%`);
+  if (searchQuery.title)
+    employeesQuery.where({ "employees.title": searchQuery.title });
+  if (searchQuery.tribe)
+    employeesQuery.where({ "tribes.name": searchQuery.tribe });
+
+  const employeesQueryResult = await employeesQuery.then();
+  return employeesQueryResult;
 }
 
-export function getEmployees(): Employee[] {
-  return structuredClone(employees);
+export async function getEmployee(
+  fastify: FastifyInstance,
+  id: number
+): Promise<Employee[]> {
+  return await fastify.db.from(TABLE_NAME).where({ id }).select();
 }
 
-export function createEmployee(employee: {
-  name: string;
-  title: string;
-  tribe: object;
-}) {
-  const newId = employees.length + 1;
-  const newEmployee = {
-    id: newId,
-    name: employee.name,
-    title: employee.title,
-    tribe: employee.tribe,
-  };
-  employees.push(newEmployee);
-  return newId;
+export async function createEmployee(
+  fastify: FastifyInstance,
+  employee: postEmployeeBodyType
+) {
+  return await fastify.db.from(TABLE_NAME).insert(employee);
 }
 
-export function deleteEmployeeById(id: number) {
-  const indexToDelete = employees.findIndex((employee) => employee.id == id);
-  if (indexToDelete === -1) return null;
-  employees.splice(indexToDelete, 1);
-  return id;
+export async function deleteEmployee(fastify: FastifyInstance, id: number) {
+  return await fastify.db.from(TABLE_NAME).where({ id }).del();
 }
